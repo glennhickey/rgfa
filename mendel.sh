@@ -15,12 +15,14 @@ printf "1 HG001 0 0 1 0\n
 6 HG006 0 0 1 0\n
 7 HG007 0 0 2 0\n" > ped_tmp_${NAME}.ped
 
+set -x
+
 # do some filtering
 bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" -o mendel_tmp_${NAME} -Oz
 tabix -fp vcf mendel_tmp_${NAME}
 
 # run rtg
-rtg mendelian -i mendel_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.mendel
+rtg mendelian -l -i mendel_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.mendel
 
 rm -f mendel_tmp_${NAME} mendel_tmp_${NAME}.tbi
 
@@ -29,7 +31,7 @@ bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\""  | sed  -e 's#1/1#0/
 tabix -fp vcf mendel_het_tmp_${NAME}
 
 # run rtg
-rtg mendelian -i mendel_het_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.mendel.het
+rtg mendelian -l -i mendel_het_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.mendel.het
 
 rm -f mendel_het_tmp_${NAME} mendel_het_tmp_${NAME}.tbi
 
