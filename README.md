@@ -34,7 +34,7 @@ for i in 1 2 3 4 5 6 7 ; do zcat hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.grc
 ```
 
 ```
-bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.rgfa.dv.fix.vcf.gz -Oz -o  hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.rgfa.dv.vcf.gz
+bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.rgfa.dv.fix.vcf.gz -Oz | bcftools +fill-tags | bgzip >  hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.rgfa.dv.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.rgfa.dv.vcf.gz
 ```
 
 
@@ -57,7 +57,7 @@ for i in 1 2 3 4 5 6 7 ; do zcat hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.grc
 ```
 
 ```
-bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.grch38-only.dv.fix.vcf.gz -Oz -o  hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.grch38-only.dv.vcf.gz
+bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.grch38-only.dv.fix.vcf.gz | bcftools +fill-tags | bgzip > hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.grch38-only.dv.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.grch38-only.dv.vcf.gz
 ```
 
 ## vg call
@@ -69,11 +69,11 @@ for i in 1 2 3 4 5 6 7; do ../calling/vg pack -x ../hprc-v1.1-mc-grch38-rgfa-oct
 ```
 
 ```
-for i in 1 2 3 4 5 6 7 ; do ./vg.call call ../hprc-v1.1-mc-grch38-rgfa-oct3.rgfa.gbz -r ../hprc-v1.1-mc-grch38-rgfa-oct3.snarls -k ../mapping/hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.pack -S GRCh38 -S _rGFA_ -zAa | bgzip > hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; done
+for i in 1 2 3 4 5 6 7 ; do ./vg.call call ../hprc-v1.1-mc-grch38-rgfa-oct3.rgfa.gbz -r ../hprc-v1.1-mc-grch38-rgfa-oct3.snarls -k ../mapping/hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.pack -s HG00${i} -S GRCh38 -S _rGFA_ -zAa | bgzip > hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; done
 ```
 
 ```
-bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.rgfa.call.vcf.gz -Oz -o hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.rgfa.call.vcf.gz
+bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.rgfa.call.vcf.gz | bcftools +fill-tags | bgzip > hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.rgfa.call.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.rgfa.call.vcf.gz
 
 ## pangenie
 
@@ -99,6 +99,20 @@ for i in 1 2 3 4 5 6 7; do resolve-nested-genotypes ../hprc-v1.1-mc-grch38-rgfa-
 
 # Analysis
 
+`rGFA` regions were extracted using debug flags, since there's no easy way to get them out of vg yet (todo).  They live in `rgfa.bed`.  In the below, `rgfa_pad50.bed` is used
+
+```
+cat ../rgfa.bed | awk '{print $1 "\t" $2-50 "\t" $2+50}' > ../rgfa_pad50.bed
+```
+
+## DeepVariant graphs
+
+```
+bcftools view hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.grch38-only.dv.vcf.gz -R ../rgfa_pad50.bed -Oz > hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.grch38-only-rgfa-pad50.dv.vcf.gz
+tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG001-7.hapl.grch38-only-rgfa-pad50.dv.vcf.gz
+```
+
+
 These are the VCFs we want to analyze
 
 - GRCh38-only DeepVariant global
@@ -111,6 +125,10 @@ These are the VCFs we want to analyze
 - vg call snps / svs on whole genome / grch38
 - pangenie snps / svs on whole genome / grch38
 
+
+### First idea
+
+Just do 1-base SNPs.  This gets rid of the nesting issue by default.  Let's us measure TSTV and drives the mendelian.  
 
 
 
