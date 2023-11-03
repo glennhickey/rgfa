@@ -4,9 +4,9 @@ VCF=$1
 MIN_QUAL=$2
 
 OUT_NAME_1=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.1
-OUT_NAME_2=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.1
-OUT_NAME_3=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.1
-OUT_NAME_4=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.1
+OUT_NAME_2=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.2
+OUT_NAME_3=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.3
+OUT_NAME_4=${VCF::-7}.vcfstats.${MIN_QUAL}.tmp.4
 
 # ts/tv
 bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" | bcftools stats | grep "^TSTV" | head -1 | awk '{print "TSTV\t" $5}' > ${OUT_NAME_1} &
