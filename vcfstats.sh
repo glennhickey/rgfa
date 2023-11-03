@@ -14,7 +14,7 @@ bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" | bcftools stats | g
 # counts
 bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" | bcftools stats | grep "^SN" | grep "number of records" | awk '{print "Total\t" $6}' > ${OUT_NAME_2} &
 bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" | bcftools stats | grep "^SN" | grep "number of SNPs" | awk '{print "SNPs\t" $6}' > ${OUT_NAME_3} &
-bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" | bcftools stats | grep "^SN" | grep "number of indels" | awk '{print "Indels\t" $6}' ${OUT_NAME_4} &
+bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" | bcftools stats | grep "^SN" | grep "number of indels" | awk '{print "Indels\t" $6}' > ${OUT_NAME_4} &
 
 wait
 
