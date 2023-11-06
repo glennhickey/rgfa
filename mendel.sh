@@ -4,7 +4,7 @@ VCF=$1
 SDF=$2
 MIN_QUAL=$3
 
-NAME=$(basename ${VCF})
+NAME="$(basename ${VCF}).${MIN_QUAL}"
 
 # make the pedigree
 printf "1 HG001 0 0 1 0\n
@@ -22,7 +22,7 @@ bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\"" -o mendel_tmp_${NAME
 tabix -fp vcf mendel_tmp_${NAME}
 
 # run rtg
-rtg mendelian -l -i mendel_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.mendel
+rtg mendelian -l -i mendel_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.${MIN_QUAL}.mendel
 
 rm -f mendel_tmp_${NAME} mendel_tmp_${NAME}.tbi
 
@@ -31,7 +31,7 @@ bcftools view $VCF -i "QUAL>${MIN_QUAL} && FILTER=\"PASS\""  | sed  -e 's#1/1#0/
 tabix -fp vcf mendel_het_tmp_${NAME}
 
 # run rtg
-rtg mendelian -l -i mendel_het_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.mendel.het
+rtg mendelian -l -i mendel_het_tmp_${NAME} -t ${SDF} --pedigree ped_tmp_${NAME}.ped > ${VCF::-7}.${MIN_QUAL}.mendel.het
 
 rm -f mendel_het_tmp_${NAME} mendel_het_tmp_${NAME}.tbi
 

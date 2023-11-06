@@ -1,10 +1,12 @@
 #!/bin/python3
 
-import os, sys
+import os, sys, collections, math
 
 input_files = sys.argv[1:]
 
 print('\t'.join(['Caller', 'Subset', 'MIN-QUAL', 'Sample', 'SNPs', 'TSTV']))
+
+records = collections.defaultdict(list)
 
 for f in input_files:
     # use some naming conventions to parse fields for our table
@@ -13,7 +15,7 @@ for f in input_files:
     if 'pangenie' in fn:
         caller = 'PanGenie'
     elif 'deep' in fn or 'dv' in fn:
-        caller = 'DeepVariant'
+        caller = 'DV-{}'.format('rgfa' if 'rgfa.dv' in fn else 'linear')
     else:
         caller = 'vg-call'
 
@@ -44,10 +46,31 @@ for f in input_files:
     tstv = stats['TSTV']
     snps = stats['SNPs']
 
-    out_line = '\t'.join(str(x) for x in [caller, subset, qual, sample, tstv, snps])
+    key = (caller, subset, qual)
+    val = (sample, tstv, snps)
+    records[key].append(val)
 
-    print(out_line)
-            
+def mean(l):
+    return round(sum([float(x) for x in l]) / len(l), 2)
+
+def stdev(l):
+    m = mean(l)
+    var = sum([(float(x) -m)**2 for x in l]) / len(l)
+    return round(math.sqrt(var), 2)
+    
+# add in our averages
+for key, val in list(records.items()):
+    avg_val = ('Mean', mean([v[1] for v in val]), mean([v[2] for v in val]))
+    sd = ('Stdev', stdev([v[1] for v in val]), stdev([v[2] for v in val]))
+    records[key] += [avg_val, sd]
+
+# dump to tsv
+for key, val in records.items():
+    for v in val:
+        line_toks = list(key) + list(v)
+        print ('\t'.join([str(x) for x in line_toks]))
+    
+    
         
     
         
