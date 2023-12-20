@@ -61,7 +61,7 @@ bcftools merge hprc-v1.1-mc-grch38-rgfa-oct3.HG00*.hapl.grch38-only.dv.fix.vcf.g
 ```
 
 ## vg call
-
+# NOTE: should change to -O so coordinates are same as pangenie vcf?
 vg f29425d01e546c5025eca6c74f50f4f68dc19990
 
 ```
@@ -69,7 +69,7 @@ for i in 1 2 3 4 5 6 7; do ../calling/vg pack -x ../hprc-v1.1-mc-grch38-rgfa-oct
 ```
 
 ```
-for i in 1 2 3 4 5 6 7 ; do ./vg.call call ../hprc-v1.1-mc-grch38-rgfa-oct3.rgfa.gbz -r ../hprc-v1.1-mc-grch38-rgfa-oct3.snarls -k ../mapping/hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.pack -s HG00${i} -S GRCh38 -S _rGFA_ -zAa | bgzip > hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; done
+for i in 1 2 3 4 5 6 7 ; do ./vg.call call ../hprc-v1.1-mc-grch38-rgfa-oct3.rgfa.gbz -r ../hprc-v1.1-mc-grch38-rgfa-oct3.snarls -k ../mapping/hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.pack -s HG00${i} -S GRCh38 -S _rGFA_ -zAa 2>  hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.log | bgzip > hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38-rgfa-oct3.HG00${i}.hapl.rgfa.call.vcf.gz ; done
 ```
 
 ```
