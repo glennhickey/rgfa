@@ -1,0 +1,268 @@
+# make the graphs
+wget https://cgl.gi.ucsc.edu/data/cactus/t2t-apes/10-t2t-apes-mc-2023v2/10-t2t-apes-mc-2023v2.gbz
+wget https://cgl.gi.ucsc.edu/data/cactus/t2t-apes/4-t2t-orangs-mc-2023v2/4-t2t-orangs-mc-2023v2.gbz
+
+./compute-cover.sh 10-t2t-apes-mc-2023v2.gfa.gz 10-t2t-apes-mc-2023v2.rgfa50.gbz 50 hs1 2> 10-t2t-apes-mc-2023v2.rgfa.log &
+./compute-cover.sh hprc-v1.1-mc-chm13.gfa.gz hprc-v1.1-mc-chm13.rgfa.gbz 50 CHM13 2>  hprc-v1.1-mc-chm13.rgfa.log &
+./compute-cover.sh hprc-v1.1-mc-grch38.gfa.gz hprc-v1.1-mc-grch38.rgfa.gbz 50 GRCh38 2> hprc-v1.1-mc-grch38.rgfa.log &
+./compute-cover.sh 4-t2t-orangs-mc-2023v2.gfa.gz 4-t2t-orangs-mc-2023v2.rgfa50.gbz 50 mPonAbe1_pri 2> 4-t2t-orangs-mc-2023v2.rgfa.log &
+
+# some basic stats
+
+~/dev/vg/bin/vg paths -x ../graphs/10-t2t-apes-mc-2023v2.rgfa50.gbz --rgfa-intervals -Q hs1 > 10-t2t-apes-mc-2023v2.rgfa50.gbz.rgfastats.tsv &
+~/dev/vg/bin/vg paths -x ../graphs/4-t2t-orangs-mc-2023v2.rgfa50.gbz --rgfa-intervals -Q mPonAbe1_pri > 4-t2t-orangs-mc-2023v2.rgfa50.gbz.rgfastats.tsv &
+~/dev/vg/bin/vg paths -x ../graphs/hprc-v1.1-mc-chm13.rgfa.gbz --rgfa-intervals -Q CHM13 > hprc-v1.1-mc-chm13.rgfa.gbz.rgfastats.tsv &
+~/dev/vg/bin/vg paths -x ../graphs/hprc-v1.1-mc-grch38.rgfa.gbz --rgfa-intervals -Q GRCh38 > hprc-v1.1-mc-grch38.rgfa.gbz.rgfastats.tsv &
+
+printf("graph\tlength\n") > rgfa-len-histogram.tsv
+cat 10-t2t-apes-mc-2023v2.rgfa50.gbz.rgfastats.tsv | awk '{print "apes\t" $5-$4}' >> rgfa-len-histogram.tsv
+cat hprc-v1.1-mc-chm13.rgfa.gbz.rgfastats.tsv | awk '{print "hprc-chm13\t" $5-$4}' >> rgfa-len-histogram.tsv
+cat hprc-v1.1-mc-grch38.rgfa.gbz.rgfastats.tsv | awk '{print "hprc-grch38\t" $5-$4}' >> rgfa-len-histogram.tsv
+
+# r
+library("ggplot2")
+library("readr")
+df = read_tsv("rgfa-len-histogram.tsv")
+ggplot(data=df, aes(x=length, color=graph, fill=graph)) + geom_histogram(binwidth=5,  alpha=0.5) + scale_y_log10()
+
+# chunk the graphs
+mkdir -p chunks
+vg chunk -x 10-t2t-apes-mc-2023v2.gbz  -C -t 8 -b chunks/10-t2t-apes-mc-2023v2.chunk
+vg chunk -x 4-t2t-orangs-mc-2023v2.gbz -C -t 8 -b chunks/4-t2t-orangs-mc-2023v2.chunk
+
+# make the vcfs
+~/dev/vg.rgfa/bin/vg deconstruct -P hs1 -P _rGFA_ -a 10-t2t-apes-mc-2023v2.rgfa50.gbz | bgzip > 10-t2t-apes-mc-2023v2.rgfa50.vcf.gz &
+~/dev/vg.rgfa/bin/vg deconstruct -P CHM13 -P _rGFA_ -a hprc-v1.1-mc-chm13.rgfa.gbz | bgzip > hprc-v1.1-mc-chm13.rgfa.vcf.gz &
+~/dev/vg.rgfa/bin/vg deconstruct -P GRCh38 -P _rGFA_ -a hprc-v1.1-mc-grch38.rgfa.gbz | bgzip > hprc-v1.1-mc-grch38.rgfa.vcf.gz &
+~/dev/vg.rgfa/bin/vg deconstruct -P mPonAbe1_pri -P _rGFA_ -a 4-t2t-orangs-mc-2023v2.rgfa50.gbz | bgzip > 4-t2t-orangs-mc-2023v2.rgfa50.vcf.gz &
+
+
+# map the giab reads
+```
+for i in 1 2 3 4 5 6 7 ; do vg giraffe -Z hprc-v1.1-mc-grch38.gbz --haplotype-name hprc-v1.1-mc-grch38.hapl -f ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R1.fastq.gz -f ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R2.fastq.gz -N HG00${i} -o gaf -p --kff-name ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.kff  2> hprc-v1.1-mc-grch38.HG00${i}.hapl.gaf.gz.log | bgzip > hprc-v1.1-mc-grch38.HG00${i}.hapl.gaf.gz ; done
+
+for i in 1 2 3 4 5 6 7 ; do vg giraffe -Z hprc-v1.1-mc-chm13.gbz --haplotype-name hprc-v1.1-mc-chm13.hapl -f ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R1.fastq.gz -f ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R2.fastq.gz -N HG00${i} -o gaf -p --kff-name ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.kff 2> hprc-v1.1-mc-chm13.HG00${i}.hapl.gaf.gz.log | bgzip > hprc-v1.1-mc-chm13.HG00${i}.hapl.gaf.gz ; done
+
+for i in 1 2 3 4 5 6 7 ; do vg giraffe -Z 10-t2t-apes-mc-2023v2.gbz --haplotype-name 10-t2t-apes-mc-2023v2.hapl -f ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R1.fastq.gz -f ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R2.fastq.gz -N HG00${i} -o gaf -p --kff-name ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.kff 2> 10-t2t-apes-mc-2023v2.HG00${i}.hapl.gaf.gz.log | bgzip > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.gaf.gz ; done
+
+
+```
+
+# pack the mappings
+
+for i in 1 2 3 4 5 6 7 ; do vg pack -x hprc-v1.1-mc-grch38.gbz -Q 5 -a  hprc-v1.1-mc-grch38.HG00${i}.hapl.gaf.gz -o hprc-v1.1-mc-grch38.HG00${i}.hapl.Q5.pack; done
+
+for i in 1 2 3 4 5 6 7 ; do vg pack -x hprc-v1.1-mc-chm13.gbz -Q 5 -a  hprc-v1.1-mc-chm13.HG00${i}.hapl.gaf.gz -o hprc-v1.1-mc-chm13.HG00${i}.hapl.Q5.pack; done
+
+for i in 1 2 3 4 5 6  ; do vg pack -x 10-t2t-apes-mc-2023v2.gbz -Q 5 -a  10-t2t-apes-mc-2023v2.HG00${i}.hapl.gaf.gz -o 10-t2t-apes-mc-2023v2.HG00${i}.hapl.Q5.pack; done
+
+# get depth stats
+
+for i in 1 2 3 4 5 6 7 ; do vg depth  hprc-v1.1-mc-grch38.rgfa.gbz -k hprc-v1.1-mc-grch38.HG00${i}.hapl.Q5.pack -P _rGFA | awk '$3>4 {print $3}'  | wc -l > hprc-v1.1-mc-grch38.HG00${i}.hapl.Q5.rgfa.m5.depth ; vg depth  hprc-v1.1-mc-grch38.rgfa.gbz -k hprc-v1.1-mc-grch38.HG00${i}.hapl.Q5.pack -P GRCh38 | awk '$3>4 {print $3}'  | wc -l > hprc-v1.1-mc-grch38.HG00${i}.hapl.Q5.ref.m5.depth; done
+
+for i in 1 2 3 4 5 6 7 ; do vg depth  hprc-v1.1-mc-chm13.rgfa.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.Q5.pack -P _rGFA | awk '$3>4 {print $3}'  | wc -l > hprc-v1.1-mc-chm13.HG00${i}.hapl.Q5.rgfa.m5.depth ; vg depth  hprc-v1.1-mc-chm13.rgfa.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.Q5.pack -P CHM13 | awk '$3>4 {print $3}'  | wc -l > hprc-v1.1-mc-chm13.HG00${i}.hapl.Q5.ref.m5.depth; done
+
+for i in 1 2 3 4 5 6 7 ; do vg depth  10-t2t-apes-mc-2023v2.rgfa50.gbz -k 10-t2t-apes-mc-2023v2.HG00${i}.hapl.Q5.pack -P _rGFA | awk '$3>4 {print $3}'  | wc -l > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.Q5.rgfa.m5.depth ; vg depth  10-t2t-apes-mc-2023v2.rgfa50.gbz -k 10-t2t-apes-mc-2023v2.HG00${i}.hapl.Q5.pack -P hs1 | awk '$3>4 {print $3}'  | wc -l > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.ref.Q5.m5.depth; done
+
+vg paths -x hprc-v1.1-mc-grch38.gbz -E -Q GRCh38 | awk '{sum += $2} END {print sum}' >  hprc-v1.1-mc-grch38.ref.length
+vg paths -x hprc-v1.1-mc-grch38.rgfa.gbz -E -Q _rGFA_ | awk '{sum += $2} END {print sum}' >  hprc-v1.1-mc-grch38.rgfa.length
+
+vg paths -x hprc-v1.1-mc-chm13.gbz -E -Q CHM13 | awk '{sum += $2} END {print sum}' >  hprc-v1.1-mc-chm13.ref.length
+vg paths -x hprc-v1.1-mc-chm13.rgfa.gbz -E -Q _rGFA_ | awk '{sum += $2} END {print sum}' >  hprc-v1.1-mc-chm13.rgfa.length
+
+vg paths -x 10-t2t-apes-mc-2023v2.gbz -E -Q hs1 | awk '{sum += $2} END {print sum}' >  10-t2t-apes-mc-2023v2.ref.length
+vg paths -x 10-t2t-apes-mc-2023v2.rgfa50.gbz -E -Q _rGFA_ | awk '{sum += $2} END {print sum}' >  10-t2t-apes-mc-2023v2.rgfa.length
+
+cat hprc-v1.1-mc-grch38.HG00*.hapl.Q5.ref.m5.depth | awk '{sum += $1} END {print sum / 7}'
+cat hprc-v1.1-mc-chm13.HG00*.hapl.Q5.ref.m5.depth | awk '{sum += $1} END {print sum / 7}'
+cat 10-t2t-apes-mc-2023v2.HG00*.hapl.ref.m5.depth | awk '{sum += $1} END {print sum / 7}'
+
+
+# pack q0
+
+for i in 1 2 3 4 5 6 7 ; do vg pack -x hprc-v1.1-mc-grch38.gbz -Q 0 -a  hprc-v1.1-mc-grch38.HG00${i}.hapl.gaf.gz -o hprc-v1.1-mc-grch38.HG00${i}.hapl.pack; done &
+
+for i in 1 2 3 4 5 6 7 ; do vg pack -x hprc-v1.1-mc-chm13.gbz -Q 0 -a  hprc-v1.1-mc-chm13.HG00${i}.hapl.gaf.gz -o hprc-v1.1-mc-chm13.HG00${i}.hapl.pack; done &
+
+for i in 1 2 3 4 5 6 7 ; do vg pack -x 10-t2t-apes-mc-2023v2.gbz -Q 0 -a  10-t2t-apes-mc-2023v2.HG00${i}.hapl.gaf.gz -o 10-t2t-apes-mc-2023v2.HG00${i}.hapl.pack; done &
+
+# depth stats q0
+
+for i in 1 2 3 4 5 6 7 ; do vg depth  hprc-v1.1-mc-grch38.rgfa.gbz -k hprc-v1.1-mc-grch38.HG00${i}.hapl.pack -P _rGFA | awk '$3>0 {print $3}'  | wc -l > hprc-v1.1-mc-grch38.HG00${i}.hapl.rgfa.depth ; vg depth  hprc-v1.1-mc-grch38.rgfa.gbz -k hprc-v1.1-mc-grch38.HG00${i}.hapl.pack -P GRCh38 | awk '$3>0 {print $3}'  | wc -l > hprc-v1.1-mc-grch38.HG00${i}.hapl.ref.depth; done
+
+for i in 1 2 3 4 5 6 7 ; do vg depth  hprc-v1.1-mc-chm13.rgfa.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.pack -P _rGFA | awk '$3>0 {print $3}'  | wc -l > hprc-v1.1-mc-chm13.HG00${i}.hapl.rgfa.depth ; vg depth  hprc-v1.1-mc-chm13.rgfa.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.pack -P CHM13 | awk '$3>0 {print $3}'  | wc -l > hprc-v1.1-mc-chm13.HG00${i}.hapl.ref.depth; done
+
+for i in 1 2 3 4 5 6 7 ; do vg depth  10-t2t-apes-mc-2023v2.rgfa50.gbz -k 10-t2t-apes-mc-2023v2.HG00${i}.hapl.pack -P _rGFA | awk '$3>0 {print $3}'  | wc -l > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.rgfa.depth ; vg depth  10-t2t-apes-mc-2023v2.rgfa50.gbz -k 10-t2t-apes-mc-2023v2.HG00${i}.hapl.Q5.pack -P hs1 | awk '$3>0 {print $3}'  | wc -l > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.ref.depth; done
+
+# get mapping stats
+
+for i in 1 2 3 4 5 6 7 ; do vg convert hprc-v1.1-mc-grch38.gbz -F  hprc-v1.1-mc-grch38.HG00${i}.hapl.gaf.gz > hprc-v1.1-mc-grch38.HG00${i}.hapl.gam ; vg stats hprc-v1.1-mc-grch38.gbz -a  hprc-v1.1-mc-grch38.HG00${i}.hapl.gam  > hprc-v1.1-mc-grch38.HG00${i}.hapl.gamstats ; rm hprc-v1.1-mc-grch38.HG00${i}.hapl.gam ; done 
+
+for i in 1 2 3 4 5 6 7 ; do vg convert hprc-v1.1-mc-chm13.gbz -F  hprc-v1.1-mc-chm13.HG00${i}.hapl.gaf.gz > hprc-v1.1-mc-chm13.HG00${i}.hapl.gam ; vg stats hprc-v1.1-mc-chm13.gbz -a  hprc-v1.1-mc-chm13.HG00${i}.hapl.gam  > hprc-v1.1-mc-chm13.HG00${i}.hapl.gamstats ; rm hprc-v1.1-mc-chm13.HG00${i}.hapl.gam ; done 
+
+for i in 1 2 3 4 5 6 7 ; do vg convert 10-t2t-apes-mc-2023v2.gbz -F  10-t2t-apes-mc-2023v2.HG00${i}.hapl.gaf.gz > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.gam ; vg stats 10-t2t-apes-mc-2023v2.gbz -a  10-t2t-apes-mc-2023v2.HG00${i}.hapl.gam  > 10-t2t-apes-mc-2023v2.HG00${i}.hapl.gamstats ; rm 10-t2t-apes-mc-2023v2.HG00${i}.hapl.gam ; done 
+
+# call the packings
+
+for i in 1 2 3 4 5 6 7 ; do ~/dev/vg.rgfa/bin/vg call hprc-v1.1-mc-grch38.rgfa.gbz -k hprc-v1.1-mc-grch38.HG00${i}.hapl.pack -r hprc-v1.1-mc-grch38.snarls -zaA -s HG00${i} -S GRCh38 -S _rGFA_ | bgzip >  hprc-v1.1-mc-grch38.HG00${i}.rgfa.call.vcf.gz && tabix -fp vcf  hprc-v1.1-mc-grch38.HG00${i}.rgfa.call.vcf.gz; done
+
+for i in 1 2 3 4 5 6 7 ; do ~/dev/vg.rgfa/bin/vg call hprc-v1.1-mc-chm13.rgfa.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.pack -r hprc-v1.1-mc-chm13.snarls -zaA -s HG00${i} -S CHM13 -S _rGFA_ | bgzip >  hprc-v1.1-mc-chm13.HG00${i}.rgfa.call.vcf.gz && tabix -fp vcf  hprc-v1.1-mc-chm13.HG00${i}.rgfa.call.vcf.gz; done
+
+for i in 1 2 3 4 5 6 7 ; do ~/dev/vg.rgfa/bin/vg call 10-t2t-apes-mc-2023v2.rgfa50.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.pack -r 10-t2t-apes-mc-2023v2.snarls -zaA -s HG00${i} -S hs1 -S _rGFA_ | bgzip >  10-t2t-apes-mc-2023v2.HG00${i}.rgfa.call.vcf.gz && tabix -fp vcf  10-t2t-apes-mc-2023v2.HG00${i}.rgfa.call.vcf.gz; done
+
+# just call rgfa (for some reason above is brutally slow)
+
+for i in 1 2 3 4 5 6 7 ; do ~/dev/vg.rgfa/bin/vg call hprc-v1.1-mc-grch38.rgfa.gbz -k hprc-v1.1-mc-grch38.HG00${i}.hapl.pack -r hprc-v1.1-mc-grch38.snarls -zaA -s HG00${i} -S _rGFA_ | bgzip >  hprc-v1.1-mc-grch38.HG00${i}.rgfa.only.call.vcf.gz && tabix -fp vcf  hprc-v1.1-mc-grch38.HG00${i}.rgfa.only.call.vcf.gz; done
+
+for i in 1 2 3 4 5 6 7 ; do ~/dev/vg.rgfa/bin/vg call hprc-v1.1-mc-chm13.rgfa.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.pack -r hprc-v1.1-mc-chm13.snarls -zaA -s HG00${i} -S _rGFA_ | bgzip >  hprc-v1.1-mc-chm13.HG00${i}.rgfa.only.call.vcf.gz && tabix -fp vcf  hprc-v1.1-mc-chm13.HG00${i}.rgfa.only.call.vcf.gz; done
+
+for i in 1 2 3 4 5 6 7 ; do ~/dev/vg.rgfa/bin/vg call 10-t2t-apes-mc-2023v2.rgfa50.gbz -k hprc-v1.1-mc-chm13.HG00${i}.hapl.pack -r 10-t2t-apes-mc-2023v2.snarls -zaA -s HG00${i} -S _rGFA_ | bgzip >  10-t2t-apes-mc-2023v2.HG00${i}.rgfa.only.call.vcf.gz && tabix -fp vcf  10-t2t-apes-mc-2023v2.HG00${i}.rgfa.only.call.vcf.gz; done
+
+
+# pangenie
+
+## start by filtering out haploid samples, and sites that don't have enough genotypes
+
+bcftools view hprc-v1.1-mc-grch38.vcf.gz -i "AN>60" -s ^CHM13 | bgzip > hprc-v1.1-mc-grch38.pg.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38.pg.vcf.gz 
+bcftools view hprc-v1.1-mc-chm13.vcf.gz -i "AN>60" -s ^GRCh38 | bgzip > hprc-v1.1-mc-chm13.pg.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-chm13.pg.vcf.gz  
+bcftools view 10-t2t-apes-mc-2023v2.vcf.gz -i "AN>6" -s ^hg38 | bgzip > 10-t2t-apes-mc-2023v2.pg.vcf.gz ; tabix -fp vcf 10-t2t-apes-mc-2023v2.pg.vcf.gz 
+
+## run pangenie on both hprc graphs 
+
+for i in 1 2 3 4 5 6 7 ; do gzip -dc ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R1.fastq.gz > HG00${i}.novaseq.pcr-free.30x.fastq ; gzip -dc ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R2.fastq.gz >> HG00${i}.novaseq.pcr-free.30x.fastq ;  ~/dev/pangenie/build/src/PanGenie -i HG00${i}.novaseq.pcr-free.30x.fastq -r ./hg38.fa -v ./hprc-v1.1-mc-grch38.pg.vcf -j 64 -o hprc-v1.1-mc-grch38.pangenie.HG00${i} -s HG00${i} -t 64  ; ~/dev/pangenie/build/src/PanGenie -i HG00${i}.novaseq.pcr-free.30x.fastq -r ./chm13.fa -v ./hprc-v1.1-mc-chm13.pg.vcf -j 64 -o hprc-v1.1-mc-chm13.pangenie.HG00${i} -s HG00${i} -t 64; rm -f HG00${i}.novaseq.pcr-free.30x.fastq ; done
+
+## run pangenie on the ape graph
+
+for i in 1 2 3 4 5 6 7 ; do gzip -dc ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R1.fastq.gz > HG00${i}.novaseq.pcr-free.30x.ape.fastq ; gzip -dc ~/dev/work/giab-reads/HG00${i}.novaseq.pcr-free.30x.R2.fastq.gz >> HG00${i}.novaseq.pcr-free.30x.ape.fastq ;  ~/dev/pangenie/build/src/PanGenie -i HG00${i}.novaseq.pcr-free.30x.ape.fastq -r ./hs1.fa -v ./10-t2t-apes-mc-2023v2.pg.vcf -j 64 -o 10-t2t-apes-mc-2023v2.pangenie.HG00${i} -s HG00${i} -t 64 ; rm -f HG00${i}.novaseq.pcr-free.30x.ape.fastq ;  done
+
+# resolve pangenie
+
+for i in 1 2 3 4 5 6 7 ; do echo $i; done | parallel -j4 "zcat hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.vcf.gz | sed -e 's/chr/GRCh38#0#chr/g' | bgzip --threads 2 > hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.prefix.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.prefix.vcf.gz ; resolve-nested-genotypes hprc-v1.1-mc-grch38.rgfa.vcf.gz hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.prefix.vcf.gz | bgzip > hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.resolved.vcf.gz"
+
+for i in 1 2 3 4 5 6 7 ; do echo $i; done | parallel -j4 "zcat hprc-v1.1-mc-chm13.pangenie.HG00{}_genotyping.vcf.gz | sed -e 's/chr/CHM13#0#chr/g' | bgzip --threads 2 > hprc-v1.1-mc-chm13.pangenie.HG00{}_genotyping.prefix.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-chm13.pangenie.HG00{}_genotyping.prefix.vcf.gz ; resolve-nested-genotypes hprc-v1.1-mc-chm13.rgfa.vcf.gz hprc-v1.1-mc-chm13.pangenie.HG00{}_genotyping.prefix.vcf.gz | bgzip > hprc-v1.1-mc-chm13.pangenie.HG00{}_genotyping.resolved.vcf.gz"
+
+for i in 1 2 3 4 5 6 7 ; do echo $i; done | parallel -j4 "zcat 10-t2t-apes-mc-2023v2.pangenie.HG00{}_genotyping.vcf.gz | sed -e 's/chr/hs1#0#chr/g' | bgzip --threads 2 > 10-t2t-apes-mc-2023v2.pangenie.HG00{}_genotyping.prefix.vcf.gz ; tabix -fp vcf 10-t2t-apes-mc-2023v2.pangenie.HG00{}_genotyping.prefix.vcf.gz ; resolve-nested-genotypes 10-t2t-apes-mc-2023v2.rgfa50.vcf.gz 10-t2t-apes-mc-2023v2.pangenie.HG00{}_genotyping.prefix.vcf.gz | bgzip > 10-t2t-apes-mc-2023v2.pangenie.HG00{}_genotyping.resolved.vcf.gz"
+
+# merge the vcfs
+bcftools merge hprc-v1.1-mc-grch38.pangenie.HG00*_genotyping.resolved.vcf.gz | bcftools +fill-tags | bgzip > hprc-v1.1-mc-grch38.pangenie.merged.vcf.gz & 
+bcftools merge hprc-v1.1-mc-chm13.pangenie.HG00*_genotyping.resolved.vcf.gz | bcftools +fill-tags | bgzip > hprc-v1.1-mc-chm13.pangenie.merged.vcf.gz & 
+bcftools merge 10-t2t-apes-mc-2023v2.pangenie.HG00*_genotyping.resolved.vcf.gz | bcftools +fill-tags | bgzip >  10-t2t-apes-mc-2023v2.pangenie.merged.vcf.gz &
+
+# split the vcfs
+
+./split-ref.sh hprc-v1.1-mc-grch38.pangenie.merged.vcf.gz GRCh38
+./split-ref.sh hprc-v1.1-mc-chm13.pangenie.merged.vcf.gz CHM13
+./split-ref.sh 10-t2t-apes-mc-2023v2.pangenie.merged.vcf.gz hs1
+
+# stats the vcfs
+
+for i in *.merged*.vcf.gz; do ./extract-snps.sh $i ; done
+
+for i in *.merged*.vcf.gz; do ./vcfstats.sh $i 0; done
+
+
+# mendel
+for i in chm13 hs1 hg38 ; do rtg format -o ${i}.SDF ${i}.fa; done
+
+for i in 10-t2t-apes*.merged*.vcf.gz; do ./mendel.sh $i hs1.SDF 0 ; done
+for i in hprc*chm13*merged*.vcf.gz; do ./mendel.sh $i chm13.SDF 0; done
+for i in hprc*grch38*merged*.vcf.gz ; do ./mendel.sh $i hg38.SDF 0; done
+
+
+
+zcat hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.vcf.gz | sed -e 's/chr/GRCh38#0#chr/g' | bgzip --threads 2 > hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.prefix.vcf.gz ; tabix -fp vcf hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.prefix.vcf.gz ; resolve-nested-genotypes hprc-v1.1-mc-grch38.rgfa.vcf.gz hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.prefix.vcf.gz | bgzip > hprc-v1.1-mc-grch38.pangenie.HG00{}_genotyping.resolved.vcf.gz"
+
+
+for i in *.resolved.vcf.gz ;  bcftools view $i 
+
+split the pangenie vcfs
+
+wget https://raw.githubusercontent.com/human-pangenomics/HPP_Year1_Assemblies/main/sample_metadata/hprc_year1_assemblies_v2_sample_metadata.txt
+
+
+# examples
+
+GRCh38#0#chr6	72442361	>75196794>75196797	T	G	0	.	LV=1;PS=>75196793>75196798;ID=GRCh38#0#chr6-7244
+2361-SNV-T-G;NS=6;AN=10;AF=0.4;MAF=0.4;AC=4;AC_Het=1;AC_Hom=2;AC_Hemi=1;HWE=0.428571;ExcHet=1;RANK=0;R_CHROM=CHM13#0#chr6;R_END=73619904
+;R_START=73619904	GT	./1	0/1	1/1	0/0	./0	./.	0/0
+
+
+GRCh38#0#chr6   72442361        >75196794>75196797      T       G       60      .       AC=17;AF=0.25;AN=68;AT=>75196794>75196795>75196797,>75196794>75196796>75196797;NS=42;LV=1;PS=>75196793>75196798 GT      0       0|0     .|0     0|.     .|1     1|0     1|0     1|1    1|1      .|0     0|.     0|0     0|1     1|.     .|.     0|0     .|.     .|1     .|.     0|.     1|0     0|0     0|0     0|0     0|1    .|0      .|0     0|0     0|0     0|1     0|0     0|0     0|0     0|.     0|.     0|0     0|0     .|0     1|1     .|0     0|.     1|0    0|0      0|0     0|1
+
+
+chr6    73619904        >76871231>76871236      T       TCTCCTTTGTATCTGCCTTTTTCCCTTTGCTTCTGTAAGGTTCTGCTTCCTCTGGTCCACATAGTCTTTCTCTTAACATGTTAACACCTTCAGAGGTTGCAGTAAAGCCTGCCAGCCT,TCTCCTTTGTATCTGCCTTTTTCCCGTTGCTTCTGTAAGGTTCTGCTTCCTCTGGTCCACATAGTCTTTCTCTTAACATGTTAACACCTTCAGAGGTTGCAGTAAAGCCTGCCAGCCT  R 60      .       AC=51,17;AF=0.573034,0.191011;AN=89;AT=>76871231>76871236,>76871231>76871232>76871233>76871235>76871236,>76871231>76871232>76871234>76871235>76871236;NS=45;LV=0        GT      1       1|1     0|1     1|0     0|2     2|1     2|1    2|2      2|2     0|1     1|0     1|1     1|2     2|0     0|0     1|1     0|0     0|2     0|0     1|0     2|1     1|1     1|1     1|1    1|2      0|1     0|1     1|1     1|1     1|2     1|1     1|1     1|1     1|0     1|0     1|1     1|1     0|1     2|2     0|1     1|0    2|1      1|1     1|1     1|2
+
+
+TCTCCTTTGTATCTGCCTTTTTCCCTTTGCTTCTGTAAGGTTCTGCTTCCTCTGGTCCACATAGTCTTTCTCTTAACATGTTAACACCTTCAGAGGTTGCAGTAAAGCCTGCCAGCCT,
+TCTCCTTTGTATCTGCCTTTTTCCCGTTGCTTCTGTAAGGTTCTGCTTCCTCTGGTCCACATAGTCTTTCTCTTAACATGTTAACACCTTCAGAGGTTGCAGTAAAGCCTGCCAGCCT
+                         *                                                                                         
+
+vg chunk -x hprc-v1.1-mc-chm13.rgfa.xg -S hprc-v1.1-mc-chm13.snarls -p CHM13#0#chr6:73619904 > hprc-v1.1-mc-chm13.rgfa.chr6.73619904.vg &
+vg chunk -x hprc-v1.1-mc-chm13.rgfa.xg -c4 -p CHM13#0#chr6:73619904 > hprc-v1.1-mc-chm13.rgfa.chr6.73619904.c4.vg &
+
+vg chunk -x 10-t2t-apes-mc-2023v2.rgfa50.xg -c4 -p hs1#0#chr6:73619904 > 10-t2t-apes-mc-2023v2.rgfa50.chr6.73619904.c4.vg &
+
+
+-------------------------------
+
+TACACCCCAAATGTGCATCCCAGTACACAC  CTTACACCCCAAATGGGCACCCCATATACACGCTTTACACCCCAAATGTGCACCCCATTACACACCTT
+TACACCCCAAATGTGCATCCCAGTACACAC  CTTACACCCCAAATGGGCACCCCAATACA CGCTTTACACCCCAAATGTGCACCCCATTACACACCTT
+TACACCCCAAATGTGCATCCCAGTACACACGCTTTACACCCCAAATGGGCACCCCAATACA CGCTTTACACCCCAAATGTGCACCCCATTACACACCTT
+
+bcftools view hprc-v1.1-mc-chm13.pangenie.merged.vcf.gz -H | grep ">10323748>10323757"
+CHM13#0#chr10	3682693	>10323748>10323757	T	TACACCCCAAATGTGCATCCCAGTACACACCTTACACCCCAAATGGGCACCCCATATACACGCTTTACACCCCAAATGTGCACCCCATTACACACCTT,TACACCCCAAATGTGCATCCCAGTACACACCTTACACCCCAAATGGGCACCCCAATACACGCTTTACACCCCAAATGTGCACCCCATTACACACCTT,TACACCCCAAATGTGCATCCCAGTACACACGCTTTACACCCCAAATGGGCACCCCAATACACGCTTTACACCCCAAATGTGCACCCCATTACACACCTT	0	.	LV=0;ID=,GRCh38#0#chr10-3678790-DEL-0-1,GRCh38#0#chr10-3678765-INS-0-2:GRCh38#0#chr10-3678790-DEL-0-1:GRCh38#0#chr10-3678767-SNV-C-T;NS=7;AN=14;AF=0,1,0;MAF=0;AC=0,14,0;AC_Het=0,0,0;AC_Hom=0,14,0;AC_Hemi=0,0,0;HWE=1,1,1;ExcHet=1,1,1	GT	2/2	2/2	2/2	2/2	2/2	2/2	2/2
+
+
+CHM13#0#chr10   3682693 >10323748>10323757      T       TACACCCCAAATGTGCATCCCAGTACACACCTTACACCCCAAATGGGCACCCCATATACACGCTTTACACCCCAAATGTG
+CACCCCATTACACACCTT,TACACCCCAAATGTGCATCCCAGTACACACCTTACACCCCAAATGGGCACCCCAATACACGCTTTACACCCCAAATGTGCACCCCATTACACACCTT,TACACCCCAAATGTGCATC
+CCAGTACACACGCTTTACACCCCAAATGGGCACCCCAATACACGCTTTACACCCCAAATGTGCACCCCATTACACACCTT        60      .       AC=1,87,1;AF=0.011236,0.977528,0
+.011236;AN=89;AT=>10323748>10323757,>10323748>10323749>10323751>10323752>10323754>10323755>10323756>10323757,>10323748>10323749>10323751
+>10323752>10323754>10323756>10323757,>10323748>10323749>10323750>10323751>10323753>10323754>10323756>10323757;NS=45;LV=0        GT
+1       2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2
+2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     3|2     2|2     2|2     2|2     2|2     2|2
+2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2     2|2
+
+GRCh38#0#chr10  3678765 >10323749>10323751      A       ACG     0       .       LV=1;PS=>10323748>10323757;ID=GRCh38#0#chr10-3678765-INS-0-2;NS=7;AN=14;AF=0;MAF=0;AC=0;AC_Het=0;AC_Hom=0;AC_Hemi=0;HWE=1;ExcHet=1      GT      0/0     0/0     0/0     0/0     0/0     0/0    0/0
+GRCh38#0#chr10  3678767 >10323751>10323754      C       T       0       .       LV=1;PS=>10323748>10323757;ID=GRCh38#0#chr10-3678767-SNV-C-T;NS=7;AN=14;AF=0;MAF=0;AC=0;AC_Het=0;AC_Hom=0;AC_Hemi=0;HWE=1;ExcHet=1      GT      0/0     0/0     0/0     0/0     0/0     0/0    0/0
+GRCh38#0#chr10  3678790 >10323754>10323756      AT      A       0       .       LV=1;PS=>10323748>10323757;ID=GRCh38#0#chr10-3678790-DEL-0-1;NS=7;AN=14;AF=1;MAF=0;AC=14;AC_Het=0;AC_Hom=14;AC_Hemi=0;HWE=1;ExcHet=1    GT      1/1     1/1     1/1     1/1     1/1     1/1    1/1
+
+vg chunk -x hprc-v1.1-mc-chm13.rgfa.xg -S hprc-v1.1-mc-chm13.snarls -p CHM13#0#chr10:3682693 > hprc-v1.1-mc-chm13.rgfa.chr10.3682693.vg &
+vg chunk -x hprc-v1.1-mc-chm13.rgfa.xg -c4  -p CHM13#0#chr10:3682693 > hprc-v1.1-mc-chm13.rgfa.chr10.3682693.c4.vg &
+
+vg chunk -x 10-t2t-apes-mc-2023v2.rgfa50.xg -c4 -p hs1#0#chr10:3682693 > 10-t2t-apes-mc-2023v2.rgfa50.chr10.3682693.c4.vg &
+---------------------------------
+
+CYPD6
+
+vg chunk -x ../graphs/hprc-v1.1-mc-chm13.rgfa.xg -p CHM13#0#chr22:42599555-42629073 -S ~/dev/work/hprc-v1.1-jul4/hprc-v1.1-mc-chm13/hprc-v1.1-mc-chm13.snarls  > CHM13_chr22_42599555_42629073.vg &
+
+----------------------------------
+
+chr5    142402706       >70433563>70433570      C       CGGGACCCACCAAGGTGTGTGGGACCCAGGTGTGC,CGGGACCCACCAAGTTGTGTGGGACCCAGGTGTGC,CGGGACCC
+ACCAAGGTGTGTGGGACCCACCAAGGTGTGTGGGACCCAGGTGTGC  60      .       AC=87,1,1;AF=0.977528,0.011236,0.011236;AN=89;AT=>70433563>70433570,>704
+33563>70433564>70433565>70433567>70433569>70433570,>70433563>70433564>70433566>70433567>70433569>70433570,>70433563>70433564>70433565>70
+433567<70433568>70433569>70433570;NS=45;LV=0    GT      1       1|1     1|1     1|1     1|1     1|1     1|1     1|1     1|1     1|1
+1|1     1|1     1|1     1|1     1|1     1|1     1|1     1|1     1|1     2|1     1|1     1|1     1|1     1|1     1|1     1|1     1|1
+
+CGGGACCCACCAAGGTGTGTGGGACCCAGGTGTGC
+CGGGACCCACCAAGTTGTGTGGGACCCAGGTGTGC
+CGGGACCCACCAAGGTGTGTGGGACCCACCAAGGTGTGTGGGACCCAGGTGTGC
+
+vg chunk -x hprc-v1.1-mc-chm13.rgfa.xg -c4  -p CHM13#0#chr5:142402706 > hprc-v1.1-mc-chm13.rgfa.chr5.142402706.c4.vg &
+
+-------------------------------------
+
+bcftools view -H hprc-v1.1-mc-chm13.pangenie.merged.offref.snp-only.annotate.vcf.gz -i "AC>3 && AN>13 && R_START == R_END" | more
+
+Finds 
+
+bcftools view hprc-v1.1-mc-chm13.pangenie.merged.vcf.gz -H -r CHM13#0#chr6:61371503  | more
+
+
+GRCh38#0#chr12  34693126        <17870849<17870852      A       G       0       .       LV=1;PS=>17870877>17870634;ID=GRCh38#0#chr12-34693126
+-SNV-A-G;NS=6;AN=11;AF=0.454545;MAF=0.454545;AC=5;AC_Het=4;AC_Hom=0;AC_Hemi=1;HWE=0.428571;ExcHet=0.380952;RANK=0;R_CHROM=CHM13#0#chr12;R_END
+=34570310;R_START=34570115      GT      ./.     0/1     0/0     ./1     0/1     0/1     0/1
+
+
+GT      .       24|34   33|30   4|17    3|2     57|18   16|47   15|12   5|1038|5     15|53   57|34   58|51   57|23   22|20   57|31   15|32   51|8    18|51   18|11   54|29   13|13   55|45   25|9    15|14   20|48   40|12 43|35   44|56   47|19   6|60    27|40   50|39   49|56   6|29    28|52   47|42   42|43   7|1     37|60   26|44   47|47   21|21   36|46
+        41|59

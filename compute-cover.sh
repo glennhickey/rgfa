@@ -21,8 +21,9 @@ VG_RGFA=~/dev/vg.rgfa/bin/vg
 # there is a bug (feature?) in master that randomly converts W-lines to P-lines that
 # seems to throw everything off.  So stick to a release for conversion
 VG=/private/groups/cgl/cactus/cactus-bin-v2.8.1/bin/vg
+#VG=~/dev/vg/bin/vg
 
 # the above bug also prevents vg.rgfa from reading GFA, hence the extra convert step at beginning
-zcat ${INPUT_GFA} | ${VG} convert - | ${VG_RGFA} paths -x - -f ${MIN_INTERVAL} -Q ${REF_PREFIX} -t ${MAX_THREADS} | ${VG} convert -f - > ${OUTPUT_GBZ}.gfa 
+zcat ${INPUT_GFA} | sed -e "s/${REF_PREFIX}#chr/${REF_PREFIX}#0#chr/g" | ${VG} convert - | ${VG_RGFA} paths -x - -f ${MIN_INTERVAL} -Q ${REF_PREFIX} -t ${MAX_THREADS} | ${VG} convert -f - > ${OUTPUT_GBZ}.gfa 
 ${VG} gbwt -G ${OUTPUT_GBZ}.gfa --gbz-format -g ${OUTPUT_GBZ}
 rm -f  ${OUTPUT_GBZ}.gfa
