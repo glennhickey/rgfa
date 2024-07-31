@@ -1,19 +1,17 @@
 #!/bin/bash
 set -ex
 
-INPUT_VCF=$1
-
-# do the pangenie preprocessing on the VCF
-PG_VCF=${INPUT_VCF::-7}_pg.vcf
+PG_VCF=$1
+INPUT_FA=$2
 
 # run pangenie on the 7 giab samples
-sbatch --wait pangenie.sh ${PG_VCF} 1 &
-sbatch --wait pangenie.sh ${PG_VCF} 2 &
-sbatch --wait pangenie.sh ${PG_VCF} 3 &
-sbatch --wait pangenie.sh ${PG_VCF} 4 &
-sbatch --wait pangenie.sh ${PG_VCF} 5 &
-sbatch --wait pangenie.sh ${PG_VCF} 6 &
-sbatch --wait pangenie.sh ${PG_VCF} 7 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 1 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 2 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 3 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 4 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 5 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 6 &
+sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 7 &
 
 wait
 
