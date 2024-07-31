@@ -15,6 +15,6 @@ Then, do the pangenie preparation.  This means filtering the VCF and making a co
 Then, do the pangenie genotyping
 
 ```
-sbatch pangenie-all.sh  ~/dev/work/hprc-v1.1hprc-v1.1-mc-grch38.L1.pg.vcf hprc-v1.1-mc-grch38.L1.pg.ref.fa
+sbatch pangenie-all.sh  hprc-v1.1-mc-grch38.L1.pg.vcf hprc-v1.1-mc-grch38.L1.pg.ref.fa
 ```
 
