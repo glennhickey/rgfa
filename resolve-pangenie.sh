@@ -24,7 +24,7 @@
 # Number of GPUs, this can be in the format of "--gres=gpu:[1-8]", or "--gres=gpu:A5500:[1-8]" with the type included (optional)
 #
 # Standard output and error log
-#SBATCH --output=pangenie_%j.log
+#SBATCH --output=resolve-pangenie_%j.log
 #
 # Wall clock limit in hrs:min:sec:
 #SBATCH --time=16:00:00
