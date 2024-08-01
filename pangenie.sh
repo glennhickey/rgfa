@@ -45,8 +45,8 @@ FQ=/data/tmp/glenn/HG00${SAMPLE}.novaseq.pcr-free.30x.fastq
 gzip -dc ${R1} > ${FQ}
 gzip -dc ${R2} >> ${FQ}
 
-${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 96 -t 96 ${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
-bgzip ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf
+${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 96 -t 96 -o /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
+bgzip -c /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE} > ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf 
 tabix -fp vcf ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf.gz
 
-rm -f $FQ
+rm -f $FQ /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE}*
