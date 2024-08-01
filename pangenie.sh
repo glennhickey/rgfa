@@ -19,7 +19,7 @@
 #
 # Processors per task:
 # At least eight times the number of GPUs needed for nVidia RTX A5500
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=96
 #
 # Number of GPUs, this can be in the format of "--gres=gpu:[1-8]", or "--gres=gpu:A5500:[1-8]" with the type included (optional)
 #
@@ -27,7 +27,7 @@
 #SBATCH --output=pangenie_%j.log
 #
 # Wall clock limit in hrs:min:sec:
-#SBATCH --time=36:00:00
+#SBATCH --time=48:00:00
 #
 ## Command(s) to run (example):
 PG_VCF=${1}
@@ -45,7 +45,7 @@ FQ=/data/tmp/glenn/HG00${SAMPLE}.novaseq.pcr-free.30x.fastq
 gzip -dc ${R1} > ${FQ}
 gzip -dc ${R2} >> ${FQ}
 
-${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 32 -t 32 ${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
+${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 96 -t 96 ${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
 bgzip ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf
 tabix -fp vcf ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf.gz
 
