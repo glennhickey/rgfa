@@ -1,5 +1,4 @@
 #!/bin/bash
-set -ex
 # Job name:
 #SBATCH --job-name=pangenie
 #
@@ -31,6 +30,9 @@ set -ex
 #SBATCH --time=48:00:00
 #
 ## Command(s) to run (example):
+
+set -ex
+
 PG_VCF=${1}
 FA=${2}
 SAMPLE=${3}
