@@ -1,4 +1,5 @@
 #!/bin/bash
+set -ex
 # Job name:
 #SBATCH --job-name=pangenie
 #
