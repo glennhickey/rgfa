@@ -27,7 +27,7 @@
 #SBATCH --output=pangenie_%j.log
 #
 # Wall clock limit in hrs:min:sec:
-#SBATCH --time=16:00:00
+#SBATCH --time=36:00:00
 #
 ## Command(s) to run (example):
 PG_VCF=${1}
