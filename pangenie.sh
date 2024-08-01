@@ -40,7 +40,7 @@ SAMPLE=${3}
 PANGENIE=~/dev/pangenie/build/src/PanGenie
 
 R1=~/dev/work/giab-reads/HG00${SAMPLE}.novaseq.pcr-free.30x.R1.fastq.gz
-R1=~/dev/work/giab-reads/HG00${SAMPLE}.novaseq.pcr-free.30x.R2.fastq.gz
+R2=~/dev/work/giab-reads/HG00${SAMPLE}.novaseq.pcr-free.30x.R2.fastq.gz
 
 mkdir -p /data/tmp/glenn
 FQ=/data/tmp/glenn/HG00${SAMPLE}.novaseq.pcr-free.30x.fastq
