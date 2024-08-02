@@ -12,14 +12,14 @@
 #SBATCH --nodes=1
 #
 # Memory needed for the jobs.  Try very hard to make this accurate.  DEFAULT = 4gb
-#SBATCH --mem=256gb
+#SBATCH --mem=512gb
 #
 # Number of tasks (one for each CPU desired for use case) (example):
 #SBATCH --ntasks=1
 #
 # Processors per task:
 # At least eight times the number of GPUs needed for nVidia RTX A5500
-#SBATCH --cpus-per-task=96
+#SBATCH --cpus-per-task=160
 #
 # Number of GPUs, this can be in the format of "--gres=gpu:[1-8]", or "--gres=gpu:A5500:[1-8]" with the type included (optional)
 #
@@ -48,8 +48,8 @@ FQ=/data/tmp/glenn/HG00${SAMPLE}.novaseq.pcr-free.30x.fastq
 gzip -dc ${R1} > ${FQ}
 gzip -dc ${R2} >> ${FQ}
 
-${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 96 -t 96 -o /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
-bgzip -c /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE} > ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf 
+${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 160 -t 160 -o /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
+bgzip -c /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE}_genotypging.vcf > ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf.gz
 tabix -fp vcf ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf.gz
 
 rm -f $FQ /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE}*
