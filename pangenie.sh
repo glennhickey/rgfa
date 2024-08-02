@@ -49,7 +49,7 @@ gzip -dc ${R1} > ${FQ}
 gzip -dc ${R2} >> ${FQ}
 
 ${PANGENIE} -i ${FQ} -r ${FA} -v ${PG_VCF} -j 160 -t 160 -o /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE} -s HG00${SAMPLE}
-bgzip -c /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE}_genotypging.vcf > ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf.gz
-tabix -fp vcf ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotpying.vcf.gz
+bgzip -c /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE}_genotyping.vcf > ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotyping.vcf.gz
+tabix -fp vcf ${PG_VCF::-4}.pg.HG00${SAMPLE}_genotyping.vcf.gz
 
 rm -f $FQ /data/tmp/glenn/${PG_VCF::-4}.pg.HG00${SAMPLE}*
