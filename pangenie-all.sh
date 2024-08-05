@@ -1,8 +1,9 @@
 #!/bin/bash
 set -ex
 
-PG_VCF=$1
-INPUT_FA=$2
+INPUT_VCF=$1
+PG_VCF=$2
+INPUT_FA=$3
 
 # run pangenie on the 7 giab samples
 sbatch --wait pangenie.sh ${PG_VCF} ${INPUT_FA} 1 &
