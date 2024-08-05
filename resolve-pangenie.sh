@@ -38,4 +38,4 @@ PG_VCF=${2}
 RESOLVED_VCF=${3}
 
 resolve-nested-genotypes ${DECON_VCF} ${PG_VCF} | bgzip > ${RESOLVED_VCF}
-tabix -pf vcf ${RESOLVED_VCF}
+tabix -fp vcf ${RESOLVED_VCF}
