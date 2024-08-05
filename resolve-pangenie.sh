@@ -19,7 +19,7 @@
 #
 # Processors per task:
 # At least eight times the number of GPUs needed for nVidia RTX A5500
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=96
 #
 # Number of GPUs, this can be in the format of "--gres=gpu:[1-8]", or "--gres=gpu:A5500:[1-8]" with the type included (optional)
 #
@@ -37,5 +37,5 @@ DECON_VCF=${1}
 PG_VCF=${2}
 RESOLVED_VCF=${3}
 
-resolve-nested-genotypes ${DECON_VCF} ${PG_VCF} | bgzip > ${RESOLVED_VCF}
+resolve-nested-genotypes ${DECON_VCF} ${PG_VCF} -t 96 | bgzip > ${RESOLVED_VCF}
 tabix -fp vcf ${RESOLVED_VCF}
